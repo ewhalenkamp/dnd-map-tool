@@ -1,95 +1,82 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+'use client'
+
+import React, { useState, useRef, useEffect } from "react";
+import MyWindowPortal from "../components/popout"
+import GridLayout from "react-grid-layout";
+import Character from "../classes/character";
+import { ReactSketchCanvas } from 'react-sketch-canvas';
 
 export default function Home() {
+  const [characters, setCharcters] = useState([new Character({ name: "Bakked", img: "https://pics.craiyon.com/2023-11-17/G1ObhmmyRGqzeG1UWTZqBQ.webp", maxHp: 100 })]);
+  const [bgImg, setBgImg] = useState("https://preview.redd.it/y982pfvjoq561.jpg?auto=webp&s=b03283b50a63f09df707e029d7067e795a2f53a6");
+  const [canvasWidth, setCanvasWidth] = useState(1000);
+  const [canvasZIndex, setCanvasZIndex] = useState(-10);
+  const aspectRatio = useRef();
+  const imgRef = useRef();
+
+  const sideBoxes = [];
+  const mapIcons = [];
+
+  const mapIconWidth = 50;
+
+  characters.forEach((c, i) => {
+    sideBoxes.push(c.sideBox(i));
+    mapIcons.push(c.mapIcon(mapIconWidth));
+  });
+
+  const resetFog = () => imgRef.current.loadPaths({
+    "drawMode": true,
+    "strokeColor": "black",
+    "strokeWidth": 100000,
+    "paths": [
+      {
+        "x": 0,
+        "y": 0
+      }
+    ]
+  })
+
+  useEffect(() => {
+    if (imgRef.current.eraseMode) {
+      resetFog();
+      imgRef.current.eraseMode(true);
+      setCanvasZIndex(10);
+    }
+  }, [imgRef.current]);
+
+  useEffect(() => {
+    const { naturalWidth, naturalHeight } = imgRef.current;
+    setCanvasWidth(naturalWidth);
+    // when aspectRatio is set, imgRef.current will update to the drawable canvas
+    aspectRatio.current = naturalWidth / naturalHeight;
+  }, []);
+
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.js</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+    <main>
+      <map>
+        <div style={{ width: `${canvasWidth}px`, position: "relative", border: "5px solid white", zIndex: canvasZIndex }}>
+          {mapIcons}
+          {/* initially render the background image on its own to determine its aspect ratio for automatic resizing later */}
+          {aspectRatio.current ?
+            <ReactSketchCanvas
+              ref={imgRef}
+              width={canvasWidth}
+              height={canvasWidth / aspectRatio.current}
+              eraserWidth={mapIconWidth}
+              backgroundImage={bgImg}
+              preserveBackgroundImageAspectRatio="none"
+            /> :
+            <img ref={imgRef} src={bgImg} />
+          }
         </div>
-      </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore starter templates for Next.js.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+      </map>
+      {/* <div className={`char_list`}>
+        <div className="inner">
+          <GridLayout rowHeight={50} width={400} cols={1} margin={[20, 50]}>
+            {sideBoxes}
+          </GridLayout>
+        </div>
+      </div> */}
+    </main >
   );
 }
